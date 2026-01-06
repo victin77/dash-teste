@@ -47,13 +47,12 @@ try {
 }
 
 const DEFAULT_CONSULTANT_PASSWORDS = {
-  azurdin: "Azurdin@21",
-  vitor: "Vitor@32",
-  polly: "Polly@45",
-  marcelo: "Marcelo@18",
-  pedro: "Pedro@27",
-  gustavo: "Gustavo@39",
-  graca: "Graca@14"
+  victor: "victor@32",
+  poli: "poli@45",
+  marcelo: "marcelo@18",
+  pedro: "pedro@27",
+  gustavo: "gustavo@39",
+  graziele: "grazi@14"
 };
 
 function getConsultantPassword(username) {
