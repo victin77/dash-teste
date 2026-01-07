@@ -697,6 +697,69 @@ async function installmentsAggregate({ consultant_id, today }) {
   };
 }
 
+app.get('/api/summary', auth(), async (req, res) => {
+  const isAdmin = req.user.role === 'admin';
+  const cid = isAdmin ? null : req.user.consultant_id;
+
+  const now = new Date();
+  const today = ymd(now);
+  const last7 = ymd(new Date(now.getTime() - 6 * 24 * 60 * 60 * 1000));
+  const monthStart = ymd(startOfMonth(now));
+
+  const [sToday, s7, sMonth, sAll, instAgg] = await Promise.all([
+    salesAggregate({ consultant_id: cid, startDate: today, endDate: today }),
+    salesAggregate({ consultant_id: cid, startDate: last7, endDate: today }),
+    salesAggregate({ consultant_id: cid, startDate: monthStart, endDate: today }),
+    salesAggregate({ consultant_id: cid }),
+    installmentsAggregate({ consultant_id: cid, today })
+  ]);
+
+  // ✅ Garantia de contagem (fallback) caso installmentsAggregate não esteja trazendo pending/overdue
+  // ou esteja retornando campos com nomes diferentes.
+  let pending = 0;
+  let overdue = 0;
+  let paid = 0;
+
+  // Tenta usar o agregado existente primeiro (sem quebrar compatibilidade)
+  if (instAgg && typeof instAgg === 'object') {
+    // formatos possíveis: { pending, overdue, paid } ou { pendentes, atrasadas, pagas } etc.
+    pending = Number(instAgg.pending ?? instAgg.pendente ?? instAgg.pendentes ?? 0);
+    overdue  = Number(instAgg.overdue ?? instAgg.atrasada ?? instAgg.atrasadas ?? 0);
+    paid     = Number(instAgg.paid ?? instAgg.paga ?? instAgg.pagas ?? 0);
+  }
+
+  // Se veio tudo zerado, recalcula lendo as parcelas direto (aí não tem erro)
+  if ((pending + overdue + paid) === 0) {
+    // espera-se que exista uma função que liste parcelas; se no seu arquivo ela tiver outro nome,
+    // troque aqui pelo nome correto (ex.: listInstallments / getInstallments / allInstallments)
+    const allInstallments = await listInstallments();
+
+    const visible = isAdmin
+      ? allInstallments
+      : allInstallments.filter(i => i.consultant_id === cid);
+
+    pending = visible.filter(i => i.status === 'pendente').length;
+    overdue = visible.filter(i => i.status === 'atrasada').length;
+    paid    = visible.filter(i => i.status === 'paga').length;
+  }
+
+  const installments = {
+    // mantém os outros campos do agregado se existirem (ex.: total_value, next_due, etc.)
+    ...(instAgg && typeof instAgg === 'object' ? instAgg : {}),
+    pending,
+    overdue,
+    paid
+  };
+
+  res.json({
+    today: { ...sToday },
+    last7: { ...s7 },
+    month: { ...sMonth },
+    all: { ...sAll },
+    installments,
+    as_of: today
+  });
+});
 
 
 // =========================
