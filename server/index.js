@@ -756,7 +756,7 @@ app.get('/api/summary', auth(), async (req, res) => {
     last7: { ...s7 },
     month: { ...sMonth },
     all: { ...sAll },
-    installments,
+    installments, inst,
     as_of: today
   });
 });
