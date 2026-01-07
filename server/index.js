@@ -678,24 +678,74 @@ async function salesAggregate({ consultant_id, startDate, endDate }) {
 async function installmentsAggregate({ consultant_id, today }) {
   const where = [];
   const params = [];
-  if (consultant_id != null) { where.push('s.consultant_id=?'); params.push(consultant_id); }
+
+  // ⚠️ Se o seu campo de consultor na tabela sales não for "consultant_id",
+  // troque "s.consultant_id" pelo campo correto (ex: s.consultant, s.user_id, s.username).
+  if (consultant_id != null) {
+    where.push('s.consultant_id=?');
+    params.push(consultant_id);
+  }
+
+  // Usamos today só como fallback por data
   params.push(today, today);
+
   const sql = `
     SELECT
-      SUM(CASE WHEN i.paid_date IS NOT NULL OR i.status='paid' THEN 1 ELSE 0 END) as paid_count,
-      SUM(CASE WHEN i.paid_date IS NULL AND i.due_date < ? THEN 1 ELSE 0 END) as overdue_count,
-      SUM(CASE WHEN i.paid_date IS NULL AND i.due_date >= ? THEN 1 ELSE 0 END) as pending_count
+      -- PAGO: se tiver paid_date OU status indicando pago (pt/en)
+      SUM(
+        CASE
+          WHEN i.paid_date IS NOT NULL
+            OR LOWER(TRIM(COALESCE(i.status,''))) IN ('paid','pago','paga')
+          THEN 1 ELSE 0
+        END
+      ) AS paid_count,
+
+      -- ATRASADA: se status indicar atrasada (pt/en) OU (sem paid_date e due_date < today)
+      SUM(
+        CASE
+          WHEN (LOWER(TRIM(COALESCE(i.status,''))) IN ('overdue','atrasada','atrasado'))
+          THEN 1
+          WHEN i.paid_date IS NULL
+            AND (LOWER(TRIM(COALESCE(i.status,''))) NOT IN ('paid','pago','paga'))
+            AND i.due_date IS NOT NULL
+            AND i.due_date < ?
+          THEN 1
+          ELSE 0
+        END
+      ) AS overdue_count,
+
+      -- PENDENTE: se status indicar pendente (pt/en) OU (sem paid_date e due_date >= today) OU (sem due_date e não pago/atrasado)
+      SUM(
+        CASE
+          WHEN (LOWER(TRIM(COALESCE(i.status,''))) IN ('pending','pendente'))
+          THEN 1
+          WHEN i.paid_date IS NULL
+            AND (LOWER(TRIM(COALESCE(i.status,''))) NOT IN ('paid','pago','paga','overdue','atrasada','atrasado'))
+            AND i.due_date IS NOT NULL
+            AND i.due_date >= ?
+          THEN 1
+          WHEN i.paid_date IS NULL
+            AND i.due_date IS NULL
+            AND (LOWER(TRIM(COALESCE(i.status,''))) NOT IN ('paid','pago','paga','overdue','atrasada','atrasado'))
+          THEN 1
+          ELSE 0
+        END
+      ) AS pending_count
+
     FROM installments i
     JOIN sales s ON s.id = i.sale_id
     ${where.length ? 'WHERE ' + where.join(' AND ') : ''}
   `;
+
   const r = await db.get(sql, params);
+
   return {
     paid: Number(r?.paid_count || 0),
     overdue: Number(r?.overdue_count || 0),
-    pending: Number(r?.pending_count || 0)
+    pending: Number(r?.pending_count || 0),
   };
 }
+
 
 app.get('/api/summary', auth(), async (req, res) => {
   const isAdmin = req.user.role === 'admin';
