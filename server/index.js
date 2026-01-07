@@ -30,7 +30,7 @@ const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.SESSION_SECRET || 'dev-secret-change-me';
 const ADMIN_USER = process.env.ADMIN_USER || 'admin';
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin';
-const CONSULTANT_DEFAULT_PASSWORD = process.env.CONSULTANT_DEFAULT_PASSWORD || 'consultor';
+const CONSULTANT_DEFAULT_PASSWORD = process.env.CONSULTANT_DEFAULT_PASSWORD || 'consultor'; 
 
 const CONSULTANT_PASSWORDS = (() => {
   // Você pode sobrescrever via env com JSON: CONSULTANT_PASSWORDS_JSON='{"gustavo":"Senha..."}'
