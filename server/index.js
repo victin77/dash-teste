@@ -714,41 +714,11 @@ app.get('/api/summary', auth(), async (req, res) => {
     installmentsAggregate({ consultant_id: cid, today })
   ]);
 
-  // ✅ Garantia de contagem (fallback) caso installmentsAggregate não esteja trazendo pending/overdue
-  // ou esteja retornando campos com nomes diferentes.
-  let pending = 0;
-  let overdue = 0;
-  let paid = 0;
-
-  // Tenta usar o agregado existente primeiro (sem quebrar compatibilidade)
-  if (instAgg && typeof instAgg === 'object') {
-    // formatos possíveis: { pending, overdue, paid } ou { pendentes, atrasadas, pagas } etc.
-    pending = Number(instAgg.pending ?? instAgg.pendente ?? instAgg.pendentes ?? 0);
-    overdue  = Number(instAgg.overdue ?? instAgg.atrasada ?? instAgg.atrasadas ?? 0);
-    paid     = Number(instAgg.paid ?? instAgg.paga ?? instAgg.pagas ?? 0);
-  }
-
-  // Se veio tudo zerado, recalcula lendo as parcelas direto (aí não tem erro)
-  if ((pending + overdue + paid) === 0) {
-    // espera-se que exista uma função que liste parcelas; se no seu arquivo ela tiver outro nome,
-    // troque aqui pelo nome correto (ex.: listInstallments / getInstallments / allInstallments)
-    const allInstallments = await listInstallments();
-
-    const visible = isAdmin
-      ? allInstallments
-      : allInstallments.filter(i => i.consultant_id === cid);
-
-    pending = visible.filter(i => i.status === 'pendente').length;
-    overdue = visible.filter(i => i.status === 'atrasada').length;
-    paid    = visible.filter(i => i.status === 'paga').length;
-  }
-
+  // 🔐 normaliza os campos SEM depender de outra função
   const installments = {
-    // mantém os outros campos do agregado se existirem (ex.: total_value, next_due, etc.)
-    ...(instAgg && typeof instAgg === 'object' ? instAgg : {}),
-    pending,
-    overdue,
-    paid
+    pending: Number(instAgg?.pending ?? instAgg?.pendente ?? instAgg?.pendentes ?? 0),
+    overdue: Number(instAgg?.overdue ?? instAgg?.atrasada ?? instAgg?.atrasadas ?? 0),
+    paid: Number(instAgg?.paid ?? instAgg?.paga ?? instAgg?.pagas ?? 0)
   };
 
   res.json({
@@ -756,7 +726,7 @@ app.get('/api/summary', auth(), async (req, res) => {
     last7: { ...s7 },
     month: { ...sMonth },
     all: { ...sAll },
-    installments, inst,
+    installments,
     as_of: today
   });
 });
