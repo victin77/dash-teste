@@ -40,12 +40,12 @@ const CONSULTANT_PASSWORDS = (() => {
   } catch {}
   return {
     // username (slug) : senha
-    graziele: 'Grazi24@',
-    gustavo: 'Gusta26#',
-    pedro: 'Pedr25!',
-    poli: 'Poli23@',
-    marcelo: 'Marc27#',
-    victor: 'Vict26!'
+    graziele: 'grazi24@',
+    gustavo: 'gusta26#',
+    pedro: 'pedr25!',
+    poli: 'poli23@',
+    marcelo: 'marc27#',
+    victor: 'vict26!'
   };
 })();
 const DEFAULT_CONSULTANTS = [
