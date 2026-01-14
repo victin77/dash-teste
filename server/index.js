@@ -90,38 +90,11 @@ async function initDb() {
   await db.exec(`
     PRAGMA journal_mode=WAL;
 
-    CREATE TABLE IF NOT EXISTS users (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      username TEXT UNIQUE NOT NULL,
-      password_hash TEXT NOT NULL,
-      role TEXT NOT NULL CHECK(role IN ('admin','consultant')),
-      consultant_id INTEGER
-    );
+    CREATE TABLE IF NOT EXISTS users (...);
 
-    CREATE TABLE IF NOT EXISTS consultants (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT NOT NULL,
-      email TEXT,
-      active INTEGER NOT NULL DEFAULT 1
-    );
+    CREATE TABLE IF NOT EXISTS consultants (...);
 
-    CREATE TABLE IF NOT EXISTS sales (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      consultant_id INTEGER NOT NULL,
-      consultant_name TEXT NOT NULL,
-      client_name TEXT NOT NULL,
-      product TEXT NOT NULL,
-      sale_date TEXT NOT NULL,
-      insurance INTEGER NOT NULL DEFAULT 0,
-      base_value REAL NOT NULL,
-      quotas INTEGER DEFAULT 1,
-      unit_value REAL DEFAULT 0,
-      commission_percentage REAL NOT NULL,
-      total_commission REAL NOT NULL,
-      credit_generated REAL DEFAULT 0,
-      created_at TEXT NOT NULL DEFAULT (datetime('now')),
-      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-    );
+    CREATE TABLE IF NOT EXISTS sales (...);
 
     CREATE TABLE IF NOT EXISTS installments (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -135,14 +108,7 @@ async function initDb() {
       FOREIGN KEY (sale_id) REFERENCES sales(id) ON DELETE CASCADE
     );
 
-    -- Individual quotas (cotas) for each sale
-    CREATE TABLE IF NOT EXISTS sale_quotas (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      sale_id INTEGER NOT NULL,
-      number INTEGER NOT NULL,
-      value REAL NOT NULL,
-      FOREIGN KEY (sale_id) REFERENCES sales(id) ON DELETE CASCADE
-    );
+    CREATE TABLE IF NOT EXISTS sale_quotas (...);
 
     CREATE TRIGGER IF NOT EXISTS trg_sales_updated
     AFTER UPDATE ON sales
@@ -151,6 +117,20 @@ async function initDb() {
       UPDATE sales SET updated_at = datetime('now') WHERE id = OLD.id;
     END;
   `);
+
+  // ✅ COLE A MIGRAÇÃO AQUI (logo abaixo do exec)
+  const cols = await db.all(`PRAGMA table_info(installments)`);
+  const hasBoleto = cols.some(c => c.name === 'boleto_unpaid');
+
+  if (!hasBoleto) {
+    console.log('🛠️ Migrando DB: adicionando coluna installments.boleto_unpaid...');
+    await db.exec(`ALTER TABLE installments ADD COLUMN boleto_unpaid INTEGER NOT NULL DEFAULT 0;`);
+    console.log('✅ Migração concluída.');
+  }
+
+  // ... resto do initDb (seed, inserts iniciais, etc.)
+}
+
 
   // Ensure admin user
   const admin = await db.get('SELECT id FROM users WHERE username=?', [ADMIN_USER]);
