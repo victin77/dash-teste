@@ -41,8 +41,6 @@ const CONSULTANT_PASSWORDS = (() => {
     'poli': 'RaconPoli$58',
     'marcelo': 'RaconMarc%81',
     'victor': 'RaconVic&62',
-    'Wanderson': '2512'
-
   };
   try {
     if (process.env.CONSULTANT_PASSWORDS_JSON) {
@@ -79,7 +77,6 @@ const DEFAULT_CONSULTANTS = [
   'Poli',
   'Marcelo',
   'Victor'
-  'Wanderson'
 ];
 
 let db;
