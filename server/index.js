@@ -79,6 +79,7 @@ const DEFAULT_CONSULTANTS = [
   'Poli',
   'Marcelo',
   'Victor'
+  'Wanderson'
 ];
 
 let db;
