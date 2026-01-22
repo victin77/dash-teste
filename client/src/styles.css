@@ -1,0 +1,39 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+}
+
+/* smooth font rendering */
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+}
+
+/* delays que você já usa */
+.animation-delay-2000 { animation-delay: 2s; }
+.animation-delay-4000 { animation-delay: 4s; }
+
+@layer utilities {
+  .bg-grid-slate {
+    background-image: linear-gradient(to right, rgb(148 163 184 / 0.18) 1px, transparent 1px),
+      linear-gradient(to bottom, rgb(148 163 184 / 0.18) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+
+  .bg-grid-slate-dark {
+    background-image: linear-gradient(to right, rgb(148 163 184 / 0.10) 1px, transparent 1px),
+      linear-gradient(to bottom, rgb(148 163 184 / 0.10) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+}
