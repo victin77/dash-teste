@@ -25,16 +25,7 @@ const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin';
 const CONSULTANT_DEFAULT_PASSWORD = process.env.CONSULTANT_DEFAULT_PASSWORD || 'consultor'; 
 
 const CONSULTANT_PASSWORDS = (() => {
-  // Você pode sobrescrever via env com JSON: CONSULTANT_PASSWORDS_JSON='{"gustavo":"Senha..."}'
-  const fallback = {
-    'graziele': 'RaconGraz!26',
-    'gustavo': 'RaconGus@74',
-    'pedro': 'RaconPed#39',
-    'poli': 'RaconPoli$58',
-    'marcelo': 'RaconMarc%81',
-    'victor': 'RaconVic&62',
-    'wanderson': 'Raconwand@459',
-  };
+
   try {
     if (process.env.CONSULTANT_PASSWORDS_JSON) {
       const parsed = JSON.parse(process.env.CONSULTANT_PASSWORDS_JSON);
